@@ -1,3 +1,6 @@
+#pääohjelma on luotu kokoon ryhmän kesken tunneilla ja palavereissa
+
+#Peli alkaa
 nimi = input("Anna pelaajan nimi: ")
 vanha_peli = hae_pelaajan_peli(nimi)
 
@@ -23,7 +26,7 @@ if vanha_peli:
 else:
     for rivi in Tarinat.johdanto():
         print(rivi)
-        print("Peli alkaa! CO2‑budjetti: 5000")
+    print("Peli alkaa! CO2‑budjetti: 5000")
     aloitus = 'EFHK'
     difficulty = input("Valitse vaikeustaso (HELPPO/KESKIVAIKEA/VAIKEA): ").upper()
     game_id = luo_peli(nimi, aloitus, difficulty)
@@ -36,7 +39,7 @@ while peli_ohi == False:
 
     #Kaikki esineet löydetty ja peli päättyy voittoon.
     if peli_tila["current_item"] >= len(esineet):
-        print("Onneksi olkoon, olet löytänyt kaikki mummon hävittäneet esineet.")
+        print("Onneksi olkoon, olet löytänyt kaikki mummon hävittäneet esineet. Mummosi on sinulle ikuisesti kiitollinen.")
         peli_ohi = True
         continue
 
@@ -45,14 +48,14 @@ while peli_ohi == False:
     maan_nimi = input("Mihin maahan haluat lentää? ")
     pelaajan_maa = hae_maan_iso_koodi(maan_nimi)
     if not pelaajan_maa:
-        print("Tuntematon maa. Yritä uudestaan.")
+        print("Tuntematon maa. Syötä haluamasi maa uudelleen.")
         continue
 
-    # Tarkistetaan CO2-budjetin ylitys ja peli päättyy häviöön.
-    if not lenna(game_id, pelaajan_maa):
-        print("CO2-budjetti loppui! Olet saastuttanut liikaa ja peli loppuu tähän.")
+    tila = lenna(game_id, pelaajan_maa)
+
+    if tila == 'peli loppuu':
+        print("Peli loppui, koska ylitit mummon antaman CO2-budjetin. Mummo on nyt pettynyt sinuun.")
         peli_ohi = True
         continue
 
-    # Tarkistetaan löytyikö esine
     tarkista_esine(game_id, pelaajan_maa, esineet)
