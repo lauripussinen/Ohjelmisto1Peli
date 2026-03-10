@@ -6,8 +6,8 @@ yhteys = mysql.connector.connect(
     host='localhost',
     port=3306,
     database='ohjelmistopeli',
-    user='root',
-    password='Allu8221!',
+    user='lauri',
+    password='090799',
     autocommit=True
 )
 #laurin
@@ -18,6 +18,14 @@ tarina_funktiot = {
     "Nahkahanskat": Tarinat.nahkahanskat,
     "Taskukello": Tarinat.taskukello
 }
+#laurin
+def hae_maan_nimi(iso_koodi):
+    sql = 'SELECT name FROM country WHERE iso_country = %s'
+    cursor = yhteys.cursor(dictionary=True)
+    cursor.execute(sql, [iso_koodi])
+    tulos = cursor.fetchone()
+    cursor.close()
+    return tulos["name"]
 #laurin
 def resetoi_peli(game_id, aloitus_icao, difficulty):
     sql = 'UPDATE game SET location=%s, co2_consumed=0, current_item=0, attempts=0, difficulty=%s WHERE id=%s'
@@ -38,7 +46,9 @@ def hae_maan_iso_koodi(nimi):
 def hae_esineet():
     cursor = yhteys.cursor(dictionary=True)
     cursor.execute("SELECT * FROM item")
-    return cursor.fetchall()
+    tulos = cursor.fetchall()
+    cursor.close()
+    return tulos
 #aleksin
 def hae_maan_paakentta(maa):
     sql = 'SELECT airport.ident FROM airport WHERE iso_country = %s ORDER BY type = "large_airport" DESC LIMIT 1'
@@ -101,30 +111,30 @@ def lenna(game_id, kohde_maa):
     peli = hae_peli(game_id)
     nykyinen_icao = peli["location"]
     kohde_icao = hae_maan_paakentta(kohde_maa)
-
-    if not kohde_icao:
-        print("Nyt kirjoitit jotain aivan omaa. Yritäppä uudestaan.")
-        return False
+    if kohde_icao is None:
+        print("Tuntematon maa. Syötä haluamasi maa uudestaan.")
+        return
 
     km = etaisyys(nykyinen_icao, kohde_icao)
     paasto = vaikeustaso(km, peli["difficulty"])
-
-    if peli["co2_consumed"] + paasto > peli["co2_budget"]:
-        print("Et voi lentää kyseiseen maahan! CO2-budjetti ylittyisi ja peli loppuisi.")
-        return False
-
     uusi_kulutus = peli["co2_consumed"] + paasto
-    paivita_peli(game_id, kohde_icao, uusi_kulutus, peli["current_item"], peli["attempts"], peli["difficulty"])
+    if uusi_kulutus > peli["co2_budget"]:
+        paivita_peli(game_id, kohde_icao, uusi_kulutus, peli["current_item"], peli["attempts"], peli["difficulty"])
+        print(f"CO2-budjetti ylittyi ({uusi_kulutus:.1f} / {peli['co2_budget']})! Peli loppuu.")
+        return "peli loppuu"
 
-    print(f"Lensit {km:.1f} km ({nykyinen_icao} → {kohde_icao})")
+
+    maan_nimi = hae_maan_nimi(kohde_maa)
+    print(f"Lensit maahan {maan_nimi} ({km:.1f} km)")
     print(f"CO2 yhteensä: {uusi_kulutus:.1f} / {peli['co2_budget']}")
-    return True
+    paivita_peli(game_id, kohde_icao, uusi_kulutus, peli["current_item"], peli["attempts"], peli["difficulty"])
+    return
 #laurin
 def hae_pelaajan_peli(nimi):
-    sql = 'SELECT * FROM game WHERE screen_name = %s ORDER BY id DESC LIMIT 1'
     cursor = yhteys.cursor(dictionary=True)
-    cursor.execute(sql, (nimi,))
+    cursor.execute('SELECT * FROM game WHERE screen_name = %s ORDER BY id DESC LIMIT 1', [nimi])
     return cursor.fetchone()
+
 #aleksin
 def tarkista_esine(game_id, pelaajan_maa, esineet):
     peli = hae_peli(game_id)
@@ -171,7 +181,7 @@ if vanha_peli:
 else:
     for rivi in Tarinat.johdanto():
         print(rivi)
-        print("Peli alkaa! CO2‑budjetti: 5000")
+    print("Peli alkaa! CO2‑budjetti: 5000")
     aloitus = 'EFHK'
     difficulty = input("Valitse vaikeustaso (HELPPO/KESKIVAIKEA/VAIKEA): ").upper()
     game_id = luo_peli(nimi, aloitus, difficulty)
@@ -184,7 +194,7 @@ while peli_ohi == False:
 
     #Kaikki esineet löydetty ja peli päättyy voittoon.
     if peli_tila["current_item"] >= len(esineet):
-        print("Onneksi olkoon, olet löytänyt kaikki mummon hävittäneet esineet.")
+        print("Onneksi olkoon, olet löytänyt kaikki mummon hävittäneet esineet. Mummosi on sinulle ikuisesti kiitollinen.")
         peli_ohi = True
         continue
 
@@ -193,14 +203,14 @@ while peli_ohi == False:
     maan_nimi = input("Mihin maahan haluat lentää? ")
     pelaajan_maa = hae_maan_iso_koodi(maan_nimi)
     if not pelaajan_maa:
-        print("Tuntematon maa. Yritä uudestaan.")
+        print("Tuntematon maa. Syötä haluamasi maa uudelleen.")
         continue
 
-    # Tarkistetaan CO2-budjetin ylitys ja peli päättyy häviöön.
-    if not lenna(game_id, pelaajan_maa):
-        print("CO2-budjetti loppui! Olet saastuttanut liikaa ja peli loppuu tähän.")
+    tila = lenna(game_id, pelaajan_maa)
+
+    if tila == 'peli loppuu':
+        print("Peli loppui, koska ylitit mummon antaman CO2-budjetin. Mummo on nyt pettynyt sinuun.")
         peli_ohi = True
         continue
 
-    # Tarkistetaan löytyikö esine
     tarkista_esine(game_id, pelaajan_maa, esineet)
