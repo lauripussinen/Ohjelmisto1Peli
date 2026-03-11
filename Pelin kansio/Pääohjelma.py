@@ -6,8 +6,8 @@ yhteys = mysql.connector.connect(
     host='localhost',
     port=3306,
     database='ohjelmistopeli',
-    user='oma käyttäjä',
-    password='oma salasana',
+    user='lauri',
+    password='090799',
     autocommit=True
 )
 #laurin
@@ -202,6 +202,10 @@ while peli_ohi == False:
     print("Vihje:", anna_vihje(esine, peli_tila["attempts"]))
     maan_nimi = input("Mihin maahan haluat lentää? ")
     pelaajan_maa = hae_maan_iso_koodi(maan_nimi)
+    if maan_nimi == "lopeta":
+        print("Lopetit pelin. Pelisi on tallennettu.")
+        peli_ohi = True
+        continue
     if not pelaajan_maa:
         print("Tuntematon maa. Syötä haluamasi maa uudelleen.")
         continue
