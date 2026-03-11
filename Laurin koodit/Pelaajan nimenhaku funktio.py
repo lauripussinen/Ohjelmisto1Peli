@@ -1,5 +1,4 @@
 def hae_pelaajan_peli(nimi):
-    sql = 'SELECT * FROM game WHERE screen_name = %s ORDER BY id DESC LIMIT 1'
     cursor = yhteys.cursor(dictionary=True)
-    cursor.execute(sql, (nimi,))
+    cursor.execute('SELECT * FROM game WHERE screen_name = %s ORDER BY id DESC LIMIT 1', [nimi])
     return cursor.fetchone()
