@@ -7,8 +7,8 @@ yhteys = mysql.connector.connect(
     host='localhost',
     port=3306,
     database='tunnukset',
-    user='root',
-    password='Akita68',
+    user='oma käyttäjä',
+    password='salasana',
     autocommit=True
 )
 
