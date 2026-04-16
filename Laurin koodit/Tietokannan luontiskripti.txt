@@ -68,7 +68,6 @@ CREATE TABLE game_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     game_id INT NOT NULL,
     item_id INT NOT NULL,
-    acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_gameitems_game FOREIGN KEY (game_id) REFERENCES game(id),
     CONSTRAINT fk_gameitems_item FOREIGN KEY (item_id) REFERENCES item(id),
     CONSTRAINT unique_game_item UNIQUE (game_id, item_id)
