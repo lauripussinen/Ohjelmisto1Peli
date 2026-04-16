@@ -18,6 +18,22 @@ tarina_funktiot = {
     "Nahkahanskat": Tarinat.nahkahanskat,
     "Taskukello": Tarinat.taskukello
 }
+def hae_pelaajan_esineet(game_id):
+    sql = "SELECT item.* FROM item JOIN game_items ON item.id = game_items.item_id WHERE game_items.game_id = %s"
+    cursor = yhteys.cursor(dictionary=True)
+    cursor.execute(sql, (game_id,))
+    tulos = cursor.fetchall()
+    cursor.close()
+    return tulos
+
+
+def lisaa_esine_pelaajalle(game_id, item_id):
+    sql = "INSERT INTO game_items (game_id, item_id) VALUES (%s, %s)"
+    cursor = yhteys.cursor()
+    cursor.execute(sql, (game_id, item_id))
+    yhteys.commit()
+    cursor.close()
+
 #laurin
 def hae_maan_nimi(iso_koodi):
     sql = 'SELECT name FROM country WHERE iso_country = %s'
@@ -105,7 +121,7 @@ def anna_vihje(esine, yritykset):
         return esine["vihje3"]
 #aleksin
 def tarkista_maa(pelaajan_maa, esine):
-    return pelaajan_maa == esine["maa"]
+    return pelaajan_maa == esine["iso_country"]
 #laurin
 def lenna(game_id, kohde_maa):
     peli = hae_peli(game_id)
@@ -142,10 +158,14 @@ def tarkista_esine(game_id, pelaajan_maa, esineet):
     yritykset = peli["attempts"]
     esine = esineet[indeksi]
     if tarkista_maa(pelaajan_maa, esine):
-        print("Löysit esineen:", esine["nimi"])
+        print(f"Löysit esineen: {esine['nimi']}")
         if esine["nimi"] in tarina_funktiot:
             for rivi in tarina_funktiot[esine["nimi"]]():
                 print(rivi)
+
+        # TÄMÄ LISÄTÄÄN:
+        lisaa_esine_pelaajalle(game_id, esine["id"])
+
         paivita_peli(game_id, peli["location"], peli["co2_consumed"], indeksi + 1, 0, peli["difficulty"])
         return True
     else:
@@ -218,3 +238,8 @@ while peli_ohi == False:
         continue
 
     tarkista_esine(game_id, pelaajan_maa, esineet)
+
+esineet = hae_pelaajan_esineet(game_id)
+print("Löysit nämä esineet:")
+for e in esineet:
+    print("-", e["nimi"])
